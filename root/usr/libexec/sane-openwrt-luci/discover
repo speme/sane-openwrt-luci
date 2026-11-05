@@ -10,7 +10,10 @@ function quote(s,    i,c,o) {
     if (c == "\\") o=o "\\\\"
     else if (c == "\"") o=o "\\\""
     else if (c == "\t") o=o "\\t"
+    else if (c == "\n") o=o "\\n"
     else if (c == "\r") o=o "\\r"
+    else if (c == "\b") o=o "\\b"
+    else if (c == "\f") o=o "\\f"
     else o=o c
   }
   return o "\""
