@@ -1,0 +1,24 @@
+#!/bin/sh
+
+# Find the current backend device name instead of assuming a USB bus/device ID.
+device="$(scanimage -L 2>/dev/null | sed -n "s/^device \`\\(m158ab:usb:[^']*\\)'.*/\\1/p" | head -n 1)"
+if [ -z "$device" ]; then
+	printf '{"output":"No M158ab scanner detected."}\n'
+	exit 0
+fi
+scanimage -A -d "$device" 2>&1 | awk '
+function quote(s,    i,c,o) {
+  o="\""
+  for (i=1; i<=length(s); i++) {
+    c=substr(s,i,1)
+    if (c == "\\") o=o "\\\\"
+    else if (c == "\"") o=o "\\\""
+    else if (c == "\t") o=o "\\t"
+    else if (c == "\r") o=o "\\r"
+    else o=o c
+  }
+  return o "\""
+}
+{ if (NR > 1) out=out "\n"; out=out $0 }
+END { printf "{\"output\":%s}\n", quote(out) }
+'

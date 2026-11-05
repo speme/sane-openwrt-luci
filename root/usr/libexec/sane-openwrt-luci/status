@@ -1,0 +1,15 @@
+#!/bin/sh
+
+printf '{"service":'
+if ubus call service list '{"name":"m158ab-saned"}' 2>/dev/null | grep -Eq '"running"[[:space:]]*:[[:space:]]*true'; then
+	printf '"running"'
+else
+	printf '"stopped"'
+fi
+printf ',"enabled":'
+if /etc/init.d/m158ab-saned enabled >/dev/null 2>&1; then
+	printf 'true'
+else
+	printf 'false'
+fi
+printf ',"port":6566}\n'

@@ -1,0 +1,13 @@
+{
+  "admin/services/sane-openwrt": {
+    "title": "SANE Scanner",
+    "order": 72,
+    "action": {
+      "type": "view",
+      "path": "sane-openwrt/manage"
+    },
+    "depends": {
+      "acl": [ "luci-app-sane-openwrt" ]
+    }
+  }
+}

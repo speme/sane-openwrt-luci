@@ -1,0 +1,23 @@
+{
+  "luci-app-sane-openwrt": {
+    "description": "Manage the local SANE scanner service",
+    "read": {
+      "file": {
+        "/usr/libexec/sane-openwrt-luci/status": [ "exec" ],
+        "/usr/libexec/sane-openwrt-luci/discover": [ "exec" ],
+        "/usr/libexec/sane-openwrt-luci/options": [ "exec" ]
+      },
+      "uci": [ "m158ab-saned" ]
+    },
+    "write": {
+      "file": {
+        "/usr/libexec/sane-openwrt-luci/start": [ "exec" ],
+        "/usr/libexec/sane-openwrt-luci/stop": [ "exec" ],
+        "/usr/libexec/sane-openwrt-luci/restart": [ "exec" ],
+        "/usr/libexec/sane-openwrt-luci/enable": [ "exec" ],
+        "/usr/libexec/sane-openwrt-luci/disable": [ "exec" ]
+      },
+      "uci": [ "m158ab-saned" ]
+    }
+  }
+}
