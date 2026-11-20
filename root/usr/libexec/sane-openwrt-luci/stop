@@ -1,2 +1,2 @@
 #!/bin/sh
-exec /etc/init.d/m158ab-saned stop
+exec /etc/init.d/sane-openwrt stop

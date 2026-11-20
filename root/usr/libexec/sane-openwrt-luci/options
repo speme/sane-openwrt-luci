@@ -1,9 +1,15 @@
 #!/bin/sh
 
-# Find the current backend device name instead of assuming a USB bus/device ID.
-device="$(scanimage -L 2>/dev/null | sed -n "s/^device \`\\(m158ab:usb:[^']*\\)'.*/\\1/p" | head -n 1)"
-if [ -z "$device" ]; then
-	printf '{"output":"No M158ab scanner detected."}\n'
+# Accept only an exact device name currently returned by SANE discovery.
+device="$1"
+if [ -z "$device" ] || ! scanimage -L 2>/dev/null | awk -v wanted="$device" '
+  /^device `/ {
+    rest=substr($0,9); end=index(rest,"\047")
+    if (end > 0 && substr(rest,1,end-1) == wanted) found=1
+  }
+  END { exit !found }
+'; then
+	printf '{"output":"Select a scanner detected by SANE first."}\n'
 	exit 0
 fi
 scanimage -A -d "$device" 2>&1 | awk '

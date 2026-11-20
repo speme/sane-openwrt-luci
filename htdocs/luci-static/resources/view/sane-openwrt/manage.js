@@ -9,8 +9,8 @@ const execStatus = rpc.declare({
 	expect: { '': {} }
 });
 
-function runHelper(name) {
-	return execStatus('/usr/libexec/sane-openwrt-luci/' + name, []);
+function runHelper(name, params) {
+	return execStatus('/usr/libexec/sane-openwrt-luci/' + name, params || []);
 }
 
 function decode(result) {
@@ -35,8 +35,8 @@ return view.extend({
 	render: function(data) {
 		const status = data[0] || {};
 		const discovery = data[1] || {};
-		const map = new form.Map('m158ab-saned', _('SANE Scanner'),
-			_('Detect the USB scanner, manage the SANE network service, and configure access. Save this form to apply settings.'));
+		const map = new form.Map('sane-openwrt', _('SANE Scanner'),
+			_('Discover scanners supported by the installed SANE backends, manage the network service, and configure client access. Save this form to apply settings.'));
 		const section = map.section(form.NamedSection, 'main', 'server', _('Service and network'));
 		section.anonymous = true;
 		section.addremove = false;
@@ -80,6 +80,11 @@ return view.extend({
 		const caps = E('div', { 'class': 'cbi-section' }, [
 			E('h3', _('Scanner capabilities')),
 			E('p', _('Options are read from the installed SANE backend. Scan jobs and image data stay with your SANE client.')),
+			E('label', { 'for': 'sane-device' }, _('Scanner device')),
+			E('select', { 'id': 'sane-device', 'class': 'cbi-input-select' }, (discovery.devices || []).map(function(device) {
+				return E('option', { 'value': device.name }, device.description + ' [' + device.name + ']');
+			})),
+			' ',
 			E('button', { 'class': 'cbi-button', 'click': ui.createHandlerFn(this, 'showOptions') }, _('Read scan options')),
 			E('pre', { 'id': 'sane-options', 'style': 'white-space:pre-wrap; overflow-wrap:anywhere' }, _('Not queried'))
 		]);
@@ -92,6 +97,11 @@ return view.extend({
 	refresh: function() {
 		return runHelper('discover').then(decode).then(function(result) {
 			document.getElementById('sane-detection').textContent = result.output || _('No output');
+			const select = document.getElementById('sane-device');
+			select.textContent = '';
+			(result.devices || []).forEach(function(device) {
+				select.appendChild(E('option', { 'value': device.name }, device.description + ' [' + device.name + ']'));
+			});
 			return runHelper('status').then(decode);
 		}).then(function(result) {
 			document.getElementById('sane-status').textContent = _('SANE service: %s; autostart: %s; TCP port: %s').format(
@@ -110,7 +120,8 @@ return view.extend({
 	showOptions: function() {
 		const output = document.getElementById('sane-options');
 		output.textContent = _('Reading options…');
-		return runHelper('options').then(decode).then(function(result) {
+		const device = document.getElementById('sane-device').value;
+		return runHelper('options', [device]).then(decode).then(function(result) {
 			output.textContent = result.output || _('No scan options reported');
 		}).catch(function(e) { output.textContent = e.message; });
 	}

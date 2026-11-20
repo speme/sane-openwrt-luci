@@ -7,7 +7,7 @@
         "/usr/libexec/sane-openwrt-luci/discover": [ "exec" ],
         "/usr/libexec/sane-openwrt-luci/options": [ "exec" ]
       },
-      "uci": [ "m158ab-saned" ]
+      "uci": [ "sane-openwrt" ]
     },
     "write": {
       "file": {
@@ -17,7 +17,7 @@
         "/usr/libexec/sane-openwrt-luci/enable": [ "exec" ],
         "/usr/libexec/sane-openwrt-luci/disable": [ "exec" ]
       },
-      "uci": [ "m158ab-saned" ]
+      "uci": [ "sane-openwrt" ]
     }
   }
 }
