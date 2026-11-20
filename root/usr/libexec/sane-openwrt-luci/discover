@@ -1,8 +1,14 @@
 #!/bin/sh
 
-# scanimage -L emits backend-controlled text. JSON-escape it bytewise using
-# BusyBox awk; no shell evaluation or caller-supplied arguments are involved.
-scanimage -L 2>&1 | awk '
+# Keep the command status: a failed scanimage must not appear successful
+# just because the JSON encoder completed.
+tmp="$(mktemp)" || exit 1
+trap 'rm -f "$tmp"' EXIT HUP INT TERM
+if ! scanimage -L >"$tmp" 2>&1; then
+	cat "$tmp" >&2
+	exit 1
+fi
+awk '
 function quote(s,    i,c,o) {
   o="\""
   for (i=1; i<=length(s); i++) {
@@ -33,4 +39,4 @@ function quote(s,    i,c,o) {
   }
 }
 END { printf "{\"output\":%s,\"devices\":[%s]}\n", quote(out), devices }
-'
+' "$tmp"

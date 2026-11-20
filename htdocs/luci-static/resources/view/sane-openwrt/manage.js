@@ -109,12 +109,35 @@ return view.extend({
 		}).catch(function(e) { ui.addNotification(null, E('p', e.message)); });
 	},
 
-	service: function(ev, action) {
+	service: function(action, ev) {
+		const button = ev.currentTarget;
+		const status = document.getElementById('sane-status');
+		const previousLabel = button.textContent;
+		button.disabled = true;
+		button.textContent = _('Working…');
+		status.textContent = _('Applying service action…');
+
 		return runHelper(action).then(function(result) {
 			if (!result || result.code !== 0)
 				throw new Error(result && result.stderr ? result.stderr : _('Service action failed'));
-			return this.refresh();
-		}.bind(this)).catch(function(e) { ui.addNotification(null, E('p', e.message)); });
+
+			return runHelper('status').then(decode).then(function(state) {
+				status.textContent = _('SANE service: %s; autostart: %s; TCP port: %s').format(
+					state.service || _('unknown'), state.enabled ? _('enabled') : _('disabled'), state.port || '6566');
+				if ((action === 'start' || action === 'restart') && state.service !== 'running')
+					ui.addNotification(null, E('p', _('Command completed, but the service is not running. Check the service setting and system log.')));
+				else if (action === 'stop' && state.service !== 'stopped')
+					ui.addNotification(null, E('p', _('Command completed, but the service is still running. Check the system log.')));
+				else
+					ui.addNotification(null, E('p', _('Service action completed.')));
+			});
+		}).catch(function(e) {
+			status.textContent = _('Service action failed');
+			ui.addNotification(null, E('p', e.message));
+		}).finally(function() {
+			button.disabled = false;
+			button.textContent = previousLabel;
+		});
 	},
 
 	showOptions: function() {

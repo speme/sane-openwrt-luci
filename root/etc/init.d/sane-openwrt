@@ -17,7 +17,7 @@ prepare_config() {
 	mkdir -p "$sane_dir" || return 1
 	# Expose the system's installed SANE backend configuration to this daemon.
 	for file in /etc/sane.d/*; do
-		[ -f "$file" ] || continue
+		[ -e "$file" ] || continue
 		name="${file##*/}"
 		case "$name" in
 			saned.conf) continue ;;
@@ -25,9 +25,6 @@ prepare_config() {
 			*) ln -s "$file" "$sane_dir/$name" || return 1 ;;
 		esac
 	done
-	# SANE backends installed via dll.d (for example Brother brscan2) are
-	# loaded alongside dll.conf, so preserve this directory in the runtime view.
-	[ ! -d /etc/sane.d/dll.d ] || ln -s /etc/sane.d/dll.d "$sane_dir/dll.d" || return 1
 	printf 'data_portrange = 10000 - 10010\ndata_connect_timeout = 30\n' > "$sane_dir/saned.conf.tmp" || return 1
 	config_list_foreach main allow write_allow || return 1
 	mv "$sane_dir/saned.conf.tmp" "$sane_dir/saned.conf"
@@ -49,7 +46,10 @@ start_service() {
 		return 1
 	}
 	procd_open_instance
-	procd_set_param command /usr/sbin/saned -l -e -b "$listen" -B 64
+	# /usr/sbin/saned is a shell wrapper that waits for its child.  procd
+	# stops the wrapper PID, leaving the child listening on port 6566.
+	# Supervise the actual daemon so stop/restart reaches the listener.
+	procd_set_param command /usr/lib/sane/saned -l -e -b "$listen" -B 64
 	procd_set_param env SANE_CONFIG_DIR="$sane_dir"
 	procd_set_param user saned
 	procd_set_param group scanner
