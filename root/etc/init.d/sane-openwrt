@@ -15,18 +15,22 @@ prepare_config() {
 	sane_dir=/var/etc/sane-openwrt
 	rm -rf "$sane_dir"
 	mkdir -p "$sane_dir" || return 1
+	# The init script may inherit a restrictive umask (for example from
+	# an SSH or rpcd session).  The daemon runs as saned:scanner.
+	chmod 755 "$sane_dir" || return 1
 	# Expose the system's installed SANE backend configuration to this daemon.
 	for file in /etc/sane.d/*; do
 		[ -e "$file" ] || continue
 		name="${file##*/}"
 		case "$name" in
 			saned.conf) continue ;;
-			dll.conf) cp "$file" "$sane_dir/$name" || return 1 ;;
+			dll.conf) cp "$file" "$sane_dir/$name" && chmod 644 "$sane_dir/$name" || return 1 ;;
 			*) ln -s "$file" "$sane_dir/$name" || return 1 ;;
 		esac
 	done
 	printf 'data_portrange = 10000 - 10010\ndata_connect_timeout = 30\n' > "$sane_dir/saned.conf.tmp" || return 1
 	config_list_foreach main allow write_allow || return 1
+	chmod 644 "$sane_dir/saned.conf.tmp" || return 1
 	mv "$sane_dir/saned.conf.tmp" "$sane_dir/saned.conf"
 }
 
